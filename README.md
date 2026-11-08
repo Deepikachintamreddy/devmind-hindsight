@@ -29,7 +29,7 @@ Developer hits a bug
    DevMind UI (Browser)
         │
         ▼
-  FastAPI Backend (/api/analyze)
+   FastAPI Backend (/api/analyze)
         │
         ├── 1. Hindsight recall()  ← search past debugging memory
         │         │
@@ -37,10 +37,25 @@ Developer hits a bug
         │
         ├── 2. Hindsight reflect() ← synthesize knowledge across memories
         │
-        └── 3. Groq LLM (qwen3-32b)
+        └── 3. Groq LLM (openai/gpt-oss-120b)
                   │
                   └── Combines memory + reasoning → targeted fix
 ```
+
+---
+
+## ⚙️ Environment Variables
+
+Configure these in `.env` (copy from `.env.example`):
+
+| Variable | Default | Description |
+|---|---|---|
+| `HINDSIGHT_API_KEY` | *(empty)* | Hindsight API key from [ui.hindsight.vectorize.io](https://ui.hindsight.vectorize.io) (or `DEMO` for offline mode) |
+| `HINDSIGHT_BASE_URL` | `https://api.hindsight.vectorize.io` | Hindsight API base URL |
+| `GROQ_API_KEY` | *(empty)* | Groq API key from [groq.com](https://groq.com) (or `DEMO` for offline mode) |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` | LLM model identifier on Groq |
+| `APP_PORT` | `8000` | Port for the FastAPI server |
+| `MEMORY_BANK_ID` | `devmind-debug-bank` | Hindsight memory bank identifier |
 
 ---
 
@@ -55,24 +70,27 @@ pip install -r requirements.txt
 ### 2. Configure API Keys
 ```bash
 cp .env.example .env
-# Edit .env and add:
-# HINDSIGHT_API_KEY  → https://ui.hindsight.vectorize.io  (promo: MEMHACK99 for $50 free)
-# GROQ_API_KEY       → https://groq.com (free tier)
+# Edit .env and set your HINDSIGHT_API_KEY and GROQ_API_KEY
 ```
 
-### 3. Run
+### 3. Run Server
 ```bash
-cd e:\microsft_hackathon\devmind
+cd devmind
+python main.py
+```
+Or with uvicorn:
+```bash
+cd devmind
 python -m uvicorn main:app --reload --port 8000
 ```
 
-### 4. Seed Demo Data (Important!)
+### 4. Seed Demo Data
 Open http://localhost:8000 and click **🌱 Seed Demo Data**  
 This loads 10 realistic past debugging sessions into Hindsight memory.
 
 ### 5. Try a Demo Scenario
 Click any **Quick Demo Scenario** button, then hit **Analyze with Memory**.  
-Watch DevMind recall the exact fix from memory! 🎯
+Watch DevMind compare standard AI troubleshooting against past team fixes! 🎯
 
 ---
 
@@ -80,12 +98,15 @@ Watch DevMind recall the exact fix from memory! 🎯
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/analyze` | Analyze a bug using memory + LLM |
+| `GET` | `/health` | Health check returning status and mode (`real` vs `demo`) |
+| `GET` | `/api/memory-count` | Get total count of stored debugging memories |
+| `POST` | `/api/analyze` | Analyze a bug with or without team memory |
 | `POST` | `/api/log-fix` | Retain a resolved bug into memory |
-| `POST` | `/api/search` | Raw search across team memory |
-| `POST` | `/api/seed` | Seed synthetic past debugging data |
-| `GET` | `/health` | Health check |
-| `GET` | `/docs` | Swagger API docs |
+| `POST` | `/api/search` | Search past bug snippets in memory |
+| `POST` | `/api/seed` | Seed synthetic past debugging sessions |
+| `POST` | `/api/reset-memory` | Delete and recreate memory bank (or clear demo store) |
+| `GET` | `/docs` | Interactive Swagger API documentation |
+| `GET` | `/` | Web UI dashboard |
 
 ---
 
@@ -113,11 +134,6 @@ reflection = await client.areflect(bank_id=MEMORY_BANK_ID, query=error_message)
 ## 🛠️ Tech Stack
 
 - **Memory:** [Hindsight by Vectorize](https://hindsight.vectorize.io/) — persistent agent memory
-- **LLM:** [Groq](https://groq.com/) with `qwen/qwen3-32b`
+- **LLM:** [Groq](https://groq.com/) with `openai/gpt-oss-120b`
 - **Backend:** FastAPI + Python 3.10+
 - **Frontend:** Vanilla HTML/CSS/JS (zero dependencies)
-
----
-
-## 🏆 Built for HackWithHyderabad 3.0
-

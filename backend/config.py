@@ -13,7 +13,7 @@ load_dotenv(dotenv_path=env_path)
 HINDSIGHT_API_KEY  = os.getenv("HINDSIGHT_API_KEY", "").strip()
 HINDSIGHT_BASE_URL = os.getenv("HINDSIGHT_BASE_URL", "https://api.hindsight.vectorize.io").strip()
 GROQ_API_KEY       = os.getenv("GROQ_API_KEY", "").strip()
-GROQ_MODEL         = os.getenv("GROQ_MODEL", "qwen/qwen3-32b").strip()
+GROQ_MODEL         = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b").strip()
 MEMORY_BANK_ID     = os.getenv("MEMORY_BANK_ID", "devmind-debug-bank").strip()
 APP_PORT           = int(os.getenv("APP_PORT", 8000))
 
