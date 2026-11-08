@@ -93,6 +93,15 @@ This loads 10 realistic past debugging sessions into Hindsight memory.
 Click any **Quick Demo Scenario** button, then hit **Analyze with Memory**.  
 Watch DevMind compare standard AI troubleshooting against past team fixes! 🎯
 
+### Run the live test
+With the server's `.env` configured, run from the repo root:
+```bash
+python test_live.py
+```
+It checks recall, reflect, and the with-memory vs without-memory comparison against real Hindsight and Groq.
+
+Pass `--seed` only the first time, to load the 10 sample bugs. Never seed twice — it creates duplicate memories.
+
 ---
 
 ## 📡 API Endpoints
