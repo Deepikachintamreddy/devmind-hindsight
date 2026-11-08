@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevMind — Developer Debugging Memory Agent</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- ── Header ───────────────────────────────────────────────── -->
+  <header>
+    <div class="logo">
+      <span class="logo-icon">🧠</span>
+      <div>
+        <h1>DevMind</h1>
+        <p>Developer Debugging Memory Agent</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span id="mode-badge" class="badge badge-demo">Mode: DEMO</span>
+      <span id="memory-count-badge" class="badge badge-count" style="display: none;">Memories stored: 0</span>
+      <span id="memory-badge" class="badge badge-off">Memory: OFF</span>
+      <button class="btn btn-secondary" onclick="openTab('log-fix')">➕ Log a Fix</button>
+      <button class="btn btn-outline" onclick="openTab('search')">🔍 Search Memory</button>
+      <button class="btn btn-seed" onclick="seedMemory()">🌱 Seed Demo Data</button>
+    </div>
+  </header>
+
+  <!-- ── Tabs ─────────────────────────────────────────────────── -->
+  <div class="tabs">
+    <button class="tab active" data-tab="analyze" onclick="openTab('analyze')">🐛 Analyze Bug</button>
+    <button class="tab" data-tab="log-fix" onclick="openTab('log-fix')">✅ Log a Fix</button>
+    <button class="tab" data-tab="search" onclick="openTab('search')">🔍 Memory Search</button>
+  </div>
+
+  <main>
+
+    <!-- ── Tab 1: Analyze Bug ──────────────────────────────────── -->
+    <section id="tab-analyze" class="tab-content active">
+      <div class="split">
+
+        <!-- Left: Input -->
+        <div class="panel">
+          <h2>🐛 Describe Your Bug</h2>
+
+          <label>Developer Name</label>
+          <input id="developer" type="text" placeholder="e.g. Priya Sharma" value="Demo Dev" />
+
+          <label>File / Module</label>
+          <input id="file-path" type="text" placeholder="e.g. services/payment/transaction.py" />
+
+          <label>Error Message</label>
+          <textarea id="error-message" rows="3"
+            placeholder="Paste the error message here...&#10;e.g. OperationalError: FATAL: remaining connection slots are reserved..."></textarea>
+
+          <label>Stack Trace <span class="optional">(optional)</span></label>
+          <textarea id="stack-trace" rows="5"
+            placeholder="Paste the full stack trace here..."></textarea>
+
+          <button class="btn btn-primary full-width" onclick="analyzeError()">
+            🔍 Analyze with Memory
+          </button>
+
+          <!-- Quick demo scenarios -->
+          <div class="quick-scenarios">
+            <p>⚡ Quick Demo Scenarios</p>
+            <button class="scenario-btn" onclick="loadScenario('db')">DB Connection Exhausted</button>
+            <button class="scenario-btn" onclick="loadScenario('auth')">JWT Auth Null Crash</button>
+            <button class="scenario-btn" onclick="loadScenario('race')">Payment Race Condition</button>
+            <button class="scenario-btn" onclick="loadScenario('async')">Asyncio Event Loop Block</button>
+            <button class="scenario-btn" onclick="loadScenario('new')">Unknown New Bug</button>
+          </div>
+        </div>
+
+        <!-- Right: Result -->
+        <div class="panel result-panel">
+          <h2>🤖 DevMind Analysis</h2>
+          <div id="result-area" class="result-placeholder">
+            <div class="placeholder-icon">🧠</div>
+            <p>Describe your bug on the left and click <strong>Analyze with Memory</strong>.</p>
+            <p class="hint">DevMind will search your team's entire debugging history before answering.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── Tab 2: Log a Fix ────────────────────────────────────── -->
+    <section id="tab-log-fix" class="tab-content">
+      <div class="panel solo-panel">
+        <h2>✅ Log a Resolved Bug into Team Memory</h2>
+        <p class="subtitle">Fixed a bug? Don't let the knowledge die. Retain it for the whole team.</p>
+
+        <div class="form-grid">
+          <div>
+            <label>Developer Name</label>
+            <input id="lf-developer" type="text" placeholder="Your name" value="Demo Dev" />
+          </div>
+          <div>
+            <label>Error Type</label>
+            <input id="lf-error-type" type="text" placeholder="e.g. DatabaseConnectionError" />
+          </div>
+        </div>
+
+        <label>Error Message</label>
+        <textarea id="lf-error-message" rows="2" placeholder="The exact error message..."></textarea>
+
+        <label>File / Module</label>
+        <input id="lf-file-path" type="text" placeholder="e.g. app/db/session.py" />
+
+        <label>Root Cause</label>
+        <textarea id="lf-root-cause" rows="3" placeholder="What actually caused this bug? Be specific."></textarea>
+
+        <label>Fix Applied</label>
+        <textarea id="lf-fix-applied" rows="3" placeholder="Exactly what you changed/did to fix it. Include file lines if relevant."></textarea>
+
+        <label>Tags <span class="optional">(comma separated)</span></label>
+        <input id="lf-tags" type="text" placeholder="e.g. redis, caching, python, auth" />
+
+        <button class="btn btn-primary" onclick="logFix()">💾 Retain in Team Memory</button>
+
+        <div id="log-fix-result" class="log-result hidden"></div>
+      </div>
+    </section>
+
+    <!-- ── Tab 3: Memory Search ────────────────────────────────── -->
+    <section id="tab-search" class="tab-content">
+      <div class="panel solo-panel">
+        <h2>🔍 Search Team Memory</h2>
+        <p class="subtitle">Browse your team's collective debugging knowledge base.</p>
+
+        <div class="search-row">
+          <input id="search-query" type="text"
+            placeholder="e.g. redis connection, async blocking, JWT auth..." />
+          <button class="btn btn-primary" onclick="searchMemory()">Search</button>
+        </div>
+
+        <div id="search-results" class="search-results-area">
+          <p class="hint">Search results will appear here.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Toast Notification ────────────────────────────────────── -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,102 @@
+[
+  {
+    "error_type": "NullPointerException",
+    "error_message": "TypeError: Cannot read properties of null (reading 'userId')",
+    "file_path": "src/middleware/auth.js",
+    "root_cause": "JWT token expired silently — req.user was null because the token verification middleware wasn't re-checking token expiry on refresh. The session was cached in Redis with the old token.",
+    "fix_applied": "Added explicit token expiry check in auth.js line 47. Cleared Redis session cache with: redis-cli FLUSHDB. Added a 401 response handler on the frontend to auto-logout on token expiry.",
+    "developer": "Priya Sharma",
+    "tags": ["auth", "jwt", "redis", "null-pointer", "javascript"],
+    "reported_on": "2026-09-14"
+  },
+  {
+    "error_type": "DatabaseConnectionError",
+    "error_message": "sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) FATAL: remaining connection slots are reserved for non-replication superuser connections",
+    "file_path": "app/db/session.py",
+    "root_cause": "PostgreSQL max_connections limit hit (default 100). The connection pool was not being released properly because async context managers were not used — raw session.close() was missing in exception paths.",
+    "fix_applied": "Switched from raw sessions to async context managers (async with SessionLocal() as db). Set pool_size=10, max_overflow=20 in SQLAlchemy engine config. Added pgbouncer as connection pooler in production.",
+    "developer": "Rahul Verma",
+    "tags": ["database", "postgresql", "sqlalchemy", "connection-pool", "python"],
+    "reported_on": "2026-09-20"
+  },
+  {
+    "error_type": "RaceCondition",
+    "error_message": "AssertionError: Expected user balance to be 500, got 350",
+    "file_path": "services/payment/transaction.py",
+    "root_cause": "Race condition in concurrent payment processing — two simultaneous requests both read the same balance before either write committed. Classic read-modify-write race with no DB-level locking.",
+    "fix_applied": "Replaced optimistic update with SELECT FOR UPDATE in the transaction query. Used database-level row locking: db.query(User).filter(User.id == user_id).with_for_update().first(). Added integration test with concurrent requests using asyncio.gather.",
+    "developer": "Ananya Krishnan",
+    "tags": ["race-condition", "concurrency", "payments", "postgresql", "python", "locking"],
+    "reported_on": "2026-09-25"
+  },
+  {
+    "error_type": "MemoryLeak",
+    "error_message": "FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory",
+    "file_path": "workers/dataProcessor.js",
+    "root_cause": "Event listeners were being added inside a loop without cleanup. Each job run added a new 'data' listener to the stream without removing the old one — classic Node.js memory leak pattern.",
+    "fix_applied": "Moved event listener outside the loop. Added stream.removeAllListeners('data') at the end of each job. Used --max-old-space-size=4096 as temporary workaround. Added memory monitoring with process.memoryUsage() logged every 60 seconds.",
+    "developer": "Karan Mehta",
+    "tags": ["memory-leak", "nodejs", "event-listeners", "streams", "javascript"],
+    "reported_on": "2026-09-30"
+  },
+  {
+    "error_type": "CORSError",
+    "error_message": "Access to XMLHttpRequest blocked by CORS policy: No 'Access-Control-Allow-Origin' header",
+    "file_path": "backend/main.py",
+    "root_cause": "CORS middleware was added AFTER the route definitions in FastAPI. FastAPI middleware order matters — CORS must be added before routes are registered, or preflight OPTIONS requests fail silently.",
+    "fix_applied": "Moved app.add_middleware(CORSMiddleware, ...) to the top of main.py, before any @app.include_router() calls. Also added 'OPTIONS' to allowed_methods explicitly.",
+    "developer": "Priya Sharma",
+    "tags": ["cors", "fastapi", "python", "middleware", "api"],
+    "reported_on": "2026-10-06"
+  },
+  {
+    "error_type": "RedisKeyExpiry",
+    "error_message": "KeyError: 'session_token' / Cache miss causing 500 on every 15th request",
+    "file_path": "services/cache/session_cache.py",
+    "root_cause": "Redis session TTL was set to 900 seconds (15 min) but the frontend polling interval was 16 minutes. Every session expired between polls, causing a cache miss that wasn't handled gracefully — it raised a raw KeyError instead of returning a 401.",
+    "fix_applied": "Added try/except around Redis GET with fallback to DB lookup. Changed TTL to 3600 seconds. Added cache-aside pattern: check Redis → miss → query DB → repopulate Redis. Added metric logging for cache hit/miss ratio.",
+    "developer": "Rahul Verma",
+    "tags": ["redis", "caching", "session", "ttl", "python"],
+    "reported_on": "2026-10-12"
+  },
+  {
+    "error_type": "DockerNetworkError",
+    "error_message": "requests.exceptions.ConnectionError: HTTPConnectionPool(host='db', port=5432): Max retries exceeded",
+    "file_path": "docker-compose.yml",
+    "root_cause": "Service startup order in docker-compose — the app container started before the postgres container was ready to accept connections. depends_on only waits for container start, not for PostgreSQL to be fully ready.",
+    "fix_applied": "Added healthcheck to postgres service in docker-compose.yml. Added depends_on condition: service_healthy for the app service. Also added a retry loop in app startup with exponential backoff (3 retries, 2s delay).",
+    "developer": "Ananya Krishnan",
+    "tags": ["docker", "postgresql", "networking", "startup", "devops"],
+    "reported_on": "2026-10-18"
+  },
+  {
+    "error_type": "AsyncDeadlock",
+    "error_message": "asyncio.exceptions.TimeoutError / Request hangs indefinitely on /api/report",
+    "file_path": "api/routes/reports.py",
+    "root_cause": "Blocking I/O call (pandas read_csv on a 500MB file) inside an async def route handler — this blocked the entire event loop. All other requests queued behind it.",
+    "fix_applied": "Wrapped the blocking pandas call with asyncio.to_thread(pd.read_csv, filepath). For very large files, switched to chunked reading with chunksize=10000. Added a 30s timeout on the endpoint using asyncio.wait_for().",
+    "developer": "Karan Mehta",
+    "tags": ["asyncio", "fastapi", "blocking-io", "pandas", "python", "event-loop"],
+    "reported_on": "2026-10-24"
+  },
+  {
+    "error_type": "EnvVariableMissing",
+    "error_message": "KeyError: 'STRIPE_SECRET_KEY' / AttributeError: 'NoneType' object has no attribute 'startswith'",
+    "file_path": "services/billing/stripe_client.py",
+    "root_cause": "Environment variable STRIPE_SECRET_KEY was set in .env but not passed to the Docker container — docker-compose env_file was pointing to .env.production which didn't exist on the staging server.",
+    "fix_applied": "Added explicit env_file: .env to docker-compose.yml. Added startup validation in stripe_client.py that raises ValueError with clear message if key is missing. Added a CI/CD check that validates required env vars before deployment.",
+    "developer": "Priya Sharma",
+    "tags": ["env-variables", "docker", "stripe", "deployment", "configuration"],
+    "reported_on": "2026-10-31"
+  },
+  {
+    "error_type": "IndexOutOfRange",
+    "error_message": "IndexError: list index out of range at ml/predict.py line 83",
+    "file_path": "ml/predict.py",
+    "root_cause": "ML model was trained on data with exactly 128 features but the inference pipeline was receiving 127 features after a schema change in the upstream data pipeline — a column was dropped without updating the feature list.",
+    "fix_applied": "Added feature count assertion at inference time: assert len(features) == EXPECTED_FEATURES, f'Expected {EXPECTED_FEATURES}, got {len(features)}'. Added schema validation using pydantic model for inference inputs. Set up automated schema drift detection in the data pipeline.",
+    "developer": "Ananya Krishnan",
+    "tags": ["machine-learning", "data-pipeline", "schema", "python", "inference"],
+    "reported_on": "2026-11-06"
+  }
+]
