@@ -100,7 +100,7 @@ python test_live.py
 ```
 It checks recall, reflect, and the with-memory vs without-memory comparison against real Hindsight and Groq.
 
-Pass `--seed` only the first time, to load the 10 sample bugs. Never seed twice — it creates duplicate memories.
+Pass `--seed` only on the first run, to load the 10 sample bugs.
 
 ---
 
