@@ -25,7 +25,7 @@ if not GROQ_DEMO:
 
 def strip_think_blocks(text: str) -> str:
     """
-    Groq qwen3-32b can return <think>...</think> text.
+    Some Groq models can return <think>...</think> text.
     Strip any such block from the answer before returning it.
     """
     if not text:

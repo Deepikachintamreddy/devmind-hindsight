@@ -63,7 +63,8 @@ Configure these in `.env` (copy from `.env.example`):
 
 ### 1. Clone & Install
 ```bash
-cd devmind
+git clone https://github.com/Deepikachintamreddy/devmind-hindsight.git
+cd devmind-hindsight
 pip install -r requirements.txt
 ```
 
@@ -75,12 +76,12 @@ cp .env.example .env
 
 ### 3. Run Server
 ```bash
-cd devmind
+cd devmind-hindsight
 python main.py
 ```
 Or with uvicorn:
 ```bash
-cd devmind
+cd devmind-hindsight
 python -m uvicorn main:app --reload --port 8000
 ```
 
